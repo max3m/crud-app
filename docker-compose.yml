@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  springboot_customers:
+    container_name: springboot_aws-webapp
+    image: aws-webapp
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+    ports:
+      - 5556:5556
+    restart: on-failure
