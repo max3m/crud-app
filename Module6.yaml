@@ -1,0 +1,254 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::aws-demo1'
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  MyIp:
+    Description: User's IP
+    Type: String
+  Instance Type:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+  AMIid:
+    Description: AMI to use for EC2 instances
+    Type: String
+    AllowedValues:
+      - ami-02ed809dbdda7b712
+Resources:
+  VPC:
+    Type: 'AWS::EC2::VPC'.
+    Properties:
+    CidrBlock: 10.0.0.0/16
+    Tags:
+      - Key: "Name"
+        Value: "Module6VPC"
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: a1971f9c-4719-42ad-a74d-7f5086b9b2e7
+
+  PublicSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+    CidrBlock: 10.0.0.0/24
+    AvailabilityZone: !Select [ 0, !GetAZs '' ]
+    Tags:
+      - Key: "Name"
+        Value: "Module6VPC-subnet-public-1"
+    Metadata:
+      'AWS::CloudFormation:: Designer':
+        id: a20c0c3a-cd54-4365-b3fd-b4c18483d46d
+    Depends on:
+      - InternetGateway
+
+  PublicSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+    CidrBlock: 10.0.0.0/24
+    AvailabilityZone: !Select [ 0, !GetAZs '' ]
+    Tags:
+      - Key: "Name"
+        Value: "Module6VPC-subnet-public-2"
+    Metadata:
+      'AWS::CloudFormation:: Designer':
+        id: 02f52bc9-192f-4a98-a374-ba871a19fe22
+    Depends on:
+      - InternetGateway
+
+  DBSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [ 0, !GetAZS '' ]
+    Tags:
+      - Key: "Name"
+        Value: "Module6VPC-subnet-db-1"
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 6fccafc6-6313-4eab-a69a-c4bf5b7040f4
+
+  DBSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: ! Select [0, !GetAZs " ]
+      Tags:
+        - Key: "Name"
+          Value: "Module6VPC-subnet-db-2"
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 70430aaf-eeac-4f5b-9de0-389eec2a4ad8
+
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: "Module6-internetGateway"
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: a5f3bd02-9b6c-4f21-9cd7-8df9278891ae
+
+  GatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: 'Ref InternetGateway'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 50121d94-e4de-42ce-bfe1-a72eb7c79dfd
+
+  PublicSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Allows all
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Ref MyIp
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref MyIp
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        Tags:
+          - Key: "Name"
+            Value: "Module6-sg-public"
+        Metadata:
+          'AWS::CloudFormation::Designer':
+            id: 74b5bb23-80cd-4a1f-a9bd-6682453e98fc
+
+  PrivateSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Allows all
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          Cidrip: 10.0.0.0/16
+      Tags:
+        - Key: "Name"
+          Value: "Module6-sg-db"
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 74b5bb23-80cd-4a1f-a9bd-6682453e98fc
+
+  EC2Instance1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      Network Interfaces:
+        - GroupSet:
+          - !Ref PublicSG
+          AssociatePublicIpAddress: 'true'
+          DeviceIndex: '0'
+          DeleteInTermination: 'true'
+          SubnetId: !Ref Public Subnet1
+      KeyName: !Ref KeyName
+      ImageId: !Ref AMIid
+      Tags:
+        - Key: "Name"
+          Value: "EC2Instance1"
+    Metadata:
+      'AWS::CloudFormation:: Designer':
+        id: e5a293f2-97f6-4072-b71e-f61a1720cb48
+
+  EC2Instance2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      Network Interfaces:
+        - GroupSet:
+            - !Ref PublicSG
+          AssociatePublicIpAddress: 'true'
+          DeviceIndex: '0'
+          DeleteInTermination: 'true'
+          SubnetId: !Ref Public Subnet2
+      KeyName: !Ref KeyName
+      ImageId: !Ref AMIid
+      Tags:
+        - Key: "Name"
+          Value: "EC2Instance2"
+    Metadata:
+      'AWS::CloudFormation:: Designer':
+        id: 2fdc3378-d060-4d15-a03c-12690749138f
+
+  EC2InstanceDB1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      Network Interfaces:
+        - GroupSet:
+            - !Ref PrivateSG
+          AssociatePublicIpAddress: 'false'
+          DeviceIndex: '0'
+          DeleteInTermination: 'true'
+          SubnetId: !Ref DBSubnet1
+      KeyName: !Ref KeyName
+      ImageId: !Ref AMIid
+      Tags:
+        - Key: "Name"
+          Value: "EC2Instance2"
+    Metadata:
+      'AWS::CloudFormation:: Designer':
+        id: 2fdc3378-d060-4d15-a03c-12690749138f
+
+  PublicSubnet1RouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref RouteTablePublic
+      SubnetId: !Ref PublicSubnet1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref RouteTablePublic
+      SubnetId: !Ref PublicSubnet2
+
+  RouteTablePublic:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+    DependsOn:
+      - InternetGateway
+      - PublicSubnet1
+      - PublicSubnet2
+
+  PublicRoute:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref RouteTablePublic
+      DestinationCidrBlock: 0.0.0.0/0
+
+  RouteTablePrivate:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+    Depends on:
+      - DBSubnet1
+      - DBSubnet2
+      - PublicSubnet1
+      - PublicSubnet2
+
+  Private Route:
+    Type: 'AWS::EC2::Route'
+    Properties:
+    GatewayId: ! Ref InternetGateway
+    RouteTableId: !Ref RouteTablePrivate
+    DestinationCidrBlock: 0.0.0.0/0
